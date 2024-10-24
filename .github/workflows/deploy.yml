@@ -40,23 +40,33 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
           debug: true
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,DOCKER_IMAGE
           script: |
-            whoami
-            echo "Current directory: $(pwd)"
+            # Docker login using existing secrets
+            docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
+            
+            # Check if port 3000 is in use
+            if lsof -i :3000; then
+              echo "Port 3000 is in use. Stopping any process using it..."
+              sudo fuser -k 3000/tcp || true
+            fi
             
             # Pull the latest image
-            docker pull ${{ env.DOCKER_IMAGE }}:latest
+            docker pull $DOCKER_IMAGE:latest
             
             # Stop and remove the old container if it exists
             docker stop react-app || true
             docker rm react-app || true
+            
+            # Wait a moment for the port to be released
+            sleep 5
             
             # Run the new container
             docker run -d \
               --name react-app \
               -p 3000:80 \
               --restart unless-stopped \
-              ${{ env.DOCKER_IMAGE }}:latest
+              $DOCKER_IMAGE:latest
             
             # Verify the container is running
             docker ps | grep react-app
