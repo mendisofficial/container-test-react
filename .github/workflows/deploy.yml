@@ -46,16 +46,9 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
           debug: true
-          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,DOCKER_IMAGE
           script: |
             # Docker login using existing secrets
-            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            
-            # Check if port 3000 is in use
-            if lsof -i :3000; then
-              echo "Port 3000 is in use. Stopping any process using it..."
-              sudo fuser -k 3000/tcp || true
-            fi
+            echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
             
             # Pull the latest image (will automatically pull the correct architecture)
             docker pull $DOCKER_IMAGE:latest
@@ -75,4 +68,9 @@ jobs:
               $DOCKER_IMAGE:latest
             
             # Verify the container is running
-            docker ps | grep react-app
+            if docker ps | grep react-app; then
+              echo "React app container is running successfully!"
+            else
+              echo "Failed to start the React app container."
+              exit 1
+            fi
