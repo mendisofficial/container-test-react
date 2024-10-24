@@ -38,7 +38,12 @@ jobs:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.VM_SSH_KEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          debug: true
           script: |
+            whoami
+            echo "Current directory: $(pwd)"
+            
             # Pull the latest image
             docker pull ${{ env.DOCKER_IMAGE }}:latest
             
@@ -52,3 +57,6 @@ jobs:
               -p 3000:80 \
               --restart unless-stopped \
               ${{ env.DOCKER_IMAGE }}:latest
+            
+            # Verify the container is running
+            docker ps | grep react-app
